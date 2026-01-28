@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊癒 TalkHeal - 讓 AI 聽懂你們的關係</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#E07A5F', // 溫暖陶瓦色
+                        secondary: '#81B29A', // 療癒鼠尾草綠
+                        cream: '#F4F1DE', // 米白背景
+                        dark: '#3D405B', // 深炭灰文字
+                        line: '#06C755', // LINE 綠
+                        ig: '#E1306C', // IG 粉 (單色示意)
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #F4F1DE; color: #3D405B; }
+        h1, h2, h3, h4, .serif { font-family: 'Noto Serif TC', serif; }
+        .smooth-shadow { box-shadow: 0 4px 20px rgba(61, 64, 91, 0.08); }
+        .step-line::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #E0E0E0;
+            z-index: -1;
+            display: none;
+        }
+        @media (min-width: 768px) { .step-line::before { display: block; } }
+        
+        /* Modal 動畫 */
+        .modal { transition: opacity 0.3s ease-in-out; opacity: 0; pointer-events: none; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+        .modal.active .modal-content { transform: scale(1); }
+        
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* FAQ 阻尼動畫 - 更平滑的緩動曲線 */
+        details .faq-content {
+            overflow: hidden;
+            transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease-out;
+        }
+        details:not([open]) .faq-content {
+            height: 0 !important;
+            opacity: 0;
+        }
+        details[open] .faq-content {
+            opacity: 1;
+        }
+
+        /* Pricing Card 點擊切換效果 */
+        .pricing-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+        }
+        .pricing-card:hover {
+            box-shadow: 0 10px 40px rgba(61, 64, 91, 0.15);
+        }
+        .pricing-card.selected {
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px rgba(224, 122, 95, 0.25);
+        }
+        @media (max-width: 767px) {
+            .pricing-card.selected {
+                transform: scale(1.02);
+            }
+        }
+
+        /* Mode Toggle Styles */
+        .mode-btn {
+            color: #888;
+            background-color: transparent;
+        }
+        .mode-btn:hover:not(.active) {
+            color: #666;
+            background-color: rgba(0,0,0,0.03);
+        }
+        .mode-btn.active {
+            background-color: #E07A5F;
+            color: white;
+            box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
+        }
+
+        /* Step hiding transition */
+        .step-item {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .step-item.hidden-step {
+            display: none !important;
+        }
+
+        /* Testimonials scrolling animation */
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-scroll-left {
+            animation: scroll-left 40s linear infinite;
+        }
+        .animate-scroll-left:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav class="flex justify-between items-center py-6 px-6 md:px-12 max-w-6xl mx-auto">
+        <div class="text-2xl font-bold serif text-primary tracking-wide flex items-center gap-2">
+            <span>🌱</span> 聊癒 TalkHeal
+        </div>
+        <button onclick="openReflectionModal()" class="bg-primary hover:bg-opacity-90 text-white px-6 py-2 rounded-full transition text-sm font-medium shadow-md">免費開始</button>
+    </nav>
+
+    <!-- Section 1: Hero -->
+    <header class="pt-10 pb-20 px-6 text-center md:text-left max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+        <div class="md:w-1/2 space-y-6">
+            <h1 class="text-4xl md:text-5xl font-bold leading-tight text-dark">
+                關係卡住了，<br>卻說不清楚哪裡不對？
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 leading-relaxed">
+                <span class="text-primary font-bold">聊癒 TalkHeal</span> 幫你找到對話的起點——<br class="hidden md:block">不再猜測，用理解取代爭吵。
+            </p>
+
+            <div class="flex flex-col gap-6 pt-4">
+                <!-- Platform Support Icons -->
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <p class="text-sm text-gray-500 font-medium">支援匯出格式：</p>
+                    <div class="flex items-center gap-4 bg-white/60 px-4 py-2 rounded-full border border-white">
+                        <div class="flex items-center gap-2 text-gray-700 font-bold">
+                            <!-- LINE Icon (簡潔版) -->
+                            <svg class="w-6 h-6 text-[#06C755]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.75c0 2.8 1.5 5.25 3.9 6.8-.2.8-.7 2.3-1.3 3.5-.2.4 0 .8.5.6 2.3-1 4.5-2.5 5.3-3 .5.1 1.1.2 1.6.2 5.52 0 10-3.92 10-8.75S17.52 2 12 2z"/></svg>
+                            <span>LINE</span>
+                        </div>
+                        <span class="text-gray-300">|</span>
+                        <div class="flex items-center gap-2 text-gray-700 font-bold">
+                            <!-- IG Icon -->
+                            <svg class="w-6 h-6 text-[#E1306C]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            <span>Instagram</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">* 其他平台暫不支援，敬請期待</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 pt-2 flex items-center gap-2 justify-center md:justify-start">
+                <span>✨ 已有 2,300+ 人使用</span>
+                <span>•</span>
+                <span>🔒 對話分析完立即刪除</span>
+            </p>
+        </div>
+        <div class="md:w-1/2 relative">
+            <img src="hero-illustration.jpeg" alt="情侶一起看報告" class="w-full rounded-[2rem] shadow-lg">
+        </div>
+    </header>
+
+    <!-- Section 2: How it works (Two Paths) -->
+    <section class="py-20 px-6 bg-white">
+        <h2 class="text-3xl font-bold text-center mb-4">怎麼開始？</h2>
+        <p class="text-gray-600 text-center mb-16">兩種方式，依你的狀況選擇</p>
+
+        <!-- Two Paths -->
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Path 1: Self Reflection -->
+            <div class="bg-secondary/5 p-8 rounded-2xl border-2 border-secondary/20 flex flex-col">
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-secondary text-white text-sm font-bold px-4 py-1 rounded-full mb-3">免費</span>
+                    <h3 class="text-xl font-bold text-secondary">🪞 自我反思</h3>
+                    <p class="text-sm text-gray-500 mt-2">適合想先整理思緒的你</p>
+                </div>
+                <div class="space-y-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-secondary/20 text-secondary rounded-full flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                        <p class="text-sm text-gray-600">回答 10 個引導問題</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-secondary/20 text-secondary rounded-full flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                        <p class="text-sm text-gray-600">獲得自我反思報告</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-secondary/20 text-secondary rounded-full flex items-center justify-center text-sm font-bold shrink-0">3</div>
+                        <p class="text-sm text-gray-600">準備好了再進一步</p>
+                    </div>
+                </div>
+                <div class="mt-auto pt-6">
+                    <button onclick="openReflectionModal()" class="w-full bg-secondary hover:bg-secondary/90 text-white font-bold py-3 rounded-xl transition">
+                        立即開始
+                    </button>
+                    <button onclick="toggleSelfReflectionSampleModal(true)" class="w-full mt-3 text-secondary text-sm font-medium hover:underline">
+                        👀 先看報告範例
+                    </button>
+                </div>
+            </div>
+
+            <!-- Path 2: Couple Check -->
+            <div class="bg-primary/5 p-8 rounded-2xl border-2 border-primary/20 flex flex-col">
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-primary text-white text-sm font-bold px-4 py-1 rounded-full mb-3">NT$ 199 起</span>
+                    <h3 class="text-xl font-bold text-primary">👫 雙方健檢</h3>
+                    <p class="text-sm text-gray-500 mt-2">適合想一起面對的你們</p>
+                </div>
+                <div class="space-y-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                        <p class="text-sm text-gray-600">匯出對話紀錄</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                        <p class="text-sm text-gray-600">雙方同意後開始分析</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-bold shrink-0">3</div>
+                        <p class="text-sm text-gray-600">收到完整健檢報告</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-bold shrink-0">4</div>
+                        <p class="text-sm text-gray-600">一起閱讀、開始對話</p>
+                    </div>
+                </div>
+                <div class="mt-auto pt-6">
+                    <button onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition">
+                        了解方案
+                    </button>
+                    <button onclick="toggleModal(true)" class="w-full mt-3 text-primary text-sm font-medium hover:underline">
+                        👀 先看報告範例
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: What You'll Get (報告亮點) -->
+    <section class="py-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-4">報告會告訴你們什麼？</h2>
+            <p class="text-gray-600 text-center mb-12">不只是數據，而是具體可行的洞察</p>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-12">
+                <!-- 亮點 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
+                    <div class="text-3xl shrink-0">📊</div>
+                    <div>
+                        <h3 class="font-bold text-dark mb-2">誰主動、誰回應？</h3>
+                        <p class="text-sm text-gray-600">看見訊息比例、主動開話頻率，理解你們的互動默契。</p>
+                    </div>
+                </div>
+                <!-- 亮點 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
+                    <div class="text-3xl shrink-0">🔍</div>
+                    <div>
+                        <h3 class="font-bold text-dark mb-2">衝突的「真正原因」</h3>
+                        <p class="text-sm text-gray-600">定位反覆出現的爭吵模式，找到卡住的核心問題。</p>
+                    </div>
+                </div>
+                <!-- 亮點 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
+                    <div class="text-3xl shrink-0">💚</div>
+                    <div>
+                        <h3 class="font-bold text-dark mb-2">你們的關係優勢</h3>
+                        <p class="text-sm text-gray-600">不只看問題，也看見彼此做得好的地方，建立信心。</p>
+                    </div>
+                </div>
+                <!-- 亮點 4 -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
+                    <div class="text-3xl shrink-0">🎯</div>
+                    <div>
+                        <h3 class="font-bold text-dark mb-2">具體的下一步建議</h3>
+                        <p class="text-sm text-gray-600">針對你們的溝通風格，給出可以立刻嘗試的練習。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal: Report Sample (升級版) -->
+    <div id="reportModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="toggleModal(false)"></div>
+
+        <div class="modal-content bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+            <!-- Header with Progress -->
+            <div class="bg-gradient-to-r from-primary to-primary/80 p-6 shrink-0">
+                <div class="flex justify-between items-start">
+                    <div class="text-white">
+                        <h3 class="text-2xl font-bold serif">關係健檢報告</h3>
+                        <p class="text-white/80 text-sm mt-1">小明 & 小美 ｜ 2025/03 - 2026/01 ｜ 32,847 則訊息</p>
+                    </div>
+                    <button onclick="toggleModal(false)" class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Navigation Pills -->
+                <div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-1">
+                    <button onclick="scrollToSection('section-overview')" data-section="section-overview" class="report-nav-btn active px-3 py-1.5 rounded-full text-xs font-medium bg-white text-primary whitespace-nowrap transition-all">總覽</button>
+                    <button onclick="scrollToSection('section-strength')" data-section="section-strength" class="report-nav-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 text-white hover:bg-white/30 whitespace-nowrap transition-all">關係優勢</button>
+                    <button onclick="scrollToSection('section-pattern')" data-section="section-pattern" class="report-nav-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 text-white hover:bg-white/30 whitespace-nowrap transition-all">溝通模式</button>
+                    <button onclick="scrollToSection('section-issue')" data-section="section-issue" class="report-nav-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 text-white hover:bg-white/30 whitespace-nowrap transition-all">需關注議題</button>
+                    <button onclick="scrollToSection('section-advice')" data-section="section-advice" class="report-nav-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 text-white hover:bg-white/30 whitespace-nowrap transition-all">具體建議</button>
+                    <button onclick="scrollToSection('section-score')" data-section="section-score" class="report-nav-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 text-white hover:bg-white/30 whitespace-nowrap transition-all">總結評分</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Body -->
+            <div id="reportScrollArea" class="flex-1 overflow-y-auto no-scrollbar">
+
+                <!-- Section: Overview -->
+                <section id="section-overview" class="p-6 md:p-8 border-b border-gray-100">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center text-sm">📊</span>
+                        數據總覽
+                    </h4>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-cream p-4 rounded-xl text-center border border-dark/10">
+                            <div class="text-2xl font-bold text-dark">14,203</div>
+                            <div class="text-xs text-gray-500 mt-1">小明訊息數</div>
+                        </div>
+                        <div class="bg-primary/10 p-4 rounded-xl text-center border border-primary/20">
+                            <div class="text-2xl font-bold text-primary">18,644</div>
+                            <div class="text-xs text-gray-500 mt-1">小美訊息數</div>
+                        </div>
+                        <div class="bg-cream p-4 rounded-xl text-center border border-dark/10">
+                            <div class="text-2xl font-bold text-dark">21:00</div>
+                            <div class="text-xs text-gray-500 mt-1">最活躍時段</div>
+                        </div>
+                        <div class="bg-secondary/10 p-4 rounded-xl text-center border border-secondary/20">
+                            <div class="text-2xl font-bold text-secondary">245</div>
+                            <div class="text-xs text-gray-500 mt-1">深度對話次數</div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Bars -->
+                    <div class="space-y-4">
+                        <div class="bg-cream/50 p-4 rounded-xl border border-dark/5">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-dark font-medium">小明 43%</span>
+                                <span class="text-gray-400">訊息比例</span>
+                                <span class="text-primary font-medium">57% 小美</span>
+                            </div>
+                            <div class="h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                                <div class="bg-dark h-full w-[43%] rounded-l-full"></div>
+                                <div class="bg-primary h-full w-[57%] rounded-r-full"></div>
+                            </div>
+                        </div>
+                        <div class="bg-cream/50 p-4 rounded-xl border border-dark/5">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-dark font-medium">小明 38%</span>
+                                <span class="text-gray-400">主動開話</span>
+                                <span class="text-primary font-medium">62% 小美</span>
+                            </div>
+                            <div class="h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                                <div class="bg-dark h-full w-[38%] rounded-l-full"></div>
+                                <div class="bg-primary h-full w-[62%] rounded-r-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Strength (綠燈區) -->
+                <section id="section-strength" class="p-6 md:p-8 bg-secondary/5 border-b border-gray-100">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-secondary/20 text-secondary rounded-lg flex items-center justify-center text-sm">✅</span>
+                        關係優勢
+                        <span class="ml-auto text-xs font-normal text-secondary bg-secondary/10 px-2 py-1 rounded-full">綠燈區</span>
+                    </h4>
+
+                    <div class="space-y-4">
+                        <div class="bg-white p-5 rounded-xl border border-secondary/20 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <span class="text-2xl">💬</span>
+                                <div>
+                                    <h5 class="font-bold text-dark mb-1">日常分享習慣穩定</h5>
+                                    <p class="text-sm text-gray-600 mb-3">「今天看到這個想到你」出現 <strong>47 次</strong>，代表你們保持著高頻率的日常連結。</p>
+                                    <div class="bg-gray-50 p-3 rounded-lg text-sm italic text-gray-500 border-l-2 border-secondary">
+                                        「欸看這隻貓 超像你睡覺的樣子哈哈哈」— 小明，2025/08/12
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-secondary/20 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <span class="text-2xl">🔧</span>
+                                <div>
+                                    <h5 class="font-bold text-dark mb-1">衝突後修復能力強</h5>
+                                    <p class="text-sm text-gray-600 mb-3">5 次主要衝突中，<strong>100% 在 24 小時內修復</strong>。雙方都願意主動破冰。</p>
+                                    <div class="bg-gray-50 p-3 rounded-lg text-sm italic text-gray-500 border-l-2 border-secondary">
+                                        「剛剛講話太衝了，對不起」— 小明，2025/09/13
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-secondary/20 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <span class="text-2xl">🎯</span>
+                                <div>
+                                    <h5 class="font-bold text-dark mb-1">共同目標明確</h5>
+                                    <p class="text-sm text-gray-600">討論過 <strong>旅行計畫 5 次</strong>、<strong>未來居住 3 次</strong>。對未來有共同想像。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Pattern -->
+                <section id="section-pattern" class="p-6 md:p-8 border-b border-gray-100">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center text-sm">🔍</span>
+                        溝通模式分析
+                    </h4>
+
+                    <!-- Emotion Expression Table -->
+                    <div class="bg-cream/50 rounded-xl p-4 mb-6 overflow-x-auto border border-dark/5">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-gray-500 border-b border-dark/10">
+                                    <th class="py-3 text-left font-medium">情感表達</th>
+                                    <th class="py-3 text-center font-medium text-dark">小明</th>
+                                    <th class="py-3 text-center font-medium text-primary">小美</th>
+                                    <th class="py-3 text-left font-medium pl-4">洞察</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-700">
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-3 font-medium">❤️ 愛意表達</td>
+                                    <td class="py-3 text-center"><span class="bg-dark/10 text-dark px-2 py-0.5 rounded-full text-xs">142</span></td>
+                                    <td class="py-3 text-center"><span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">287</span></td>
+                                    <td class="py-3 text-xs text-gray-500 pl-4">小美偏語言，小明偏行動</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-3 font-medium">🙏 感謝詞彙</td>
+                                    <td class="py-3 text-center"><span class="bg-dark/10 text-dark px-2 py-0.5 rounded-full text-xs">203</span></td>
+                                    <td class="py-3 text-center"><span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">178</span></td>
+                                    <td class="py-3 text-xs text-gray-500 pl-4">雙方感恩習慣良好</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-medium">🤝 道歉修復</td>
+                                    <td class="py-3 text-center"><span class="bg-dark/10 text-dark px-2 py-0.5 rounded-full text-xs">12</span></td>
+                                    <td class="py-3 text-center"><span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">23</span></td>
+                                    <td class="py-3 text-xs text-gray-500 pl-4">修復機制運作正常</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Style Difference -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-cream p-4 rounded-xl border border-dark/10">
+                            <h5 class="font-bold text-dark text-sm mb-2">小明的溝通風格</h5>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• 問題導向，傾向給解決方案</li>
+                                <li>• 用行動表達愛（訂餐廳、接送）</li>
+                                <li>• 較少主動表達情緒</li>
+                            </ul>
+                        </div>
+                        <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
+                            <h5 class="font-bold text-primary text-sm mb-2">小美的溝通風格</h5>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• 情感導向，需要被傾聽</li>
+                                <li>• 用語言表達愛（我愛你、想你）</li>
+                                <li>• 會明確說出感受和需求</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Issue (黃燈區) -->
+                <section id="section-issue" class="p-6 md:p-8 bg-primary/5 border-b border-gray-100">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-primary/20 text-primary rounded-lg flex items-center justify-center text-sm">⚠️</span>
+                        需要關注的議題
+                        <span class="ml-auto text-xs font-normal text-primary bg-primary/10 px-2 py-1 rounded-full">黃燈區</span>
+                    </h4>
+
+                    <div class="bg-white rounded-xl border border-primary/20 overflow-hidden shadow-sm">
+                        <div class="bg-primary/10 px-5 py-3 border-b border-primary/20">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-bold text-primary">時間分配的反覆討論</h5>
+                                <span class="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">出現 7 次</span>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <p class="text-sm text-gray-600 mb-4">這個議題在 2025/05、07、08、09、10、11、12 月都有出現，是目前關係中最需要正視的課題。</p>
+
+                            <!-- Chat Simulation -->
+                            <div class="bg-cream/50 rounded-xl p-4 mb-4 border border-dark/5">
+                                <p class="text-xs text-gray-400 mb-3">📅 2025/09/15 對話截選</p>
+                                <div class="space-y-3">
+                                    <div class="flex gap-3">
+                                        <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-xs font-bold text-primary shrink-0">美</div>
+                                        <div class="bg-primary/10 px-4 py-2 rounded-2xl rounded-tl-sm text-sm max-w-[80%] text-dark">這週又只見一次...</div>
+                                    </div>
+                                    <div class="flex gap-3 justify-end">
+                                        <div class="bg-dark/10 px-4 py-2 rounded-2xl rounded-tr-sm text-sm max-w-[80%] text-dark">這個月專案真的很忙 😓</div>
+                                        <div class="w-8 h-8 bg-dark/20 rounded-full flex items-center justify-center text-xs font-bold text-dark shrink-0">明</div>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-xs font-bold text-primary shrink-0">美</div>
+                                        <div class="bg-primary/10 px-4 py-2 rounded-2xl rounded-tl-sm text-sm max-w-[80%] text-dark">我知道，但還是會想你</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-cream border-l-4 border-primary p-4 rounded-r-lg">
+                                <p class="text-sm text-gray-700"><strong>模式分析：</strong>小美表達需求 → 小明解釋現況 → 暫時和解 → 沒有具體調整方案 → 下次再發生</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Advice -->
+                <section id="section-advice" class="p-6 md:p-8 border-b border-gray-100">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center text-sm">💡</span>
+                        具體建議
+                    </h4>
+
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-cream p-5 rounded-xl border border-dark/10">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 bg-dark/20 rounded-full flex items-center justify-center text-sm font-bold text-dark">明</div>
+                                <h5 class="font-bold text-dark">給小明的建議</h5>
+                            </div>
+                            <ul class="text-sm text-gray-700 space-y-3">
+                                <li class="flex gap-2">
+                                    <span class="text-dark">→</span>
+                                    <span>小美分享心情時，先說<strong>「聽起來很累」</strong>，再給建議</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-dark">→</span>
+                                    <span>試著說<strong>「今天開會有點煩」</strong>而非只說「今天開會」</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-primary/10 p-5 rounded-xl border border-primary/20">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 bg-primary/30 rounded-full flex items-center justify-center text-sm font-bold text-primary">美</div>
+                                <h5 class="font-bold text-primary">給小美的建議</h5>
+                            </div>
+                            <ul class="text-sm text-gray-700 space-y-3">
+                                <li class="flex gap-2">
+                                    <span class="text-primary">→</span>
+                                    <span>需要陪伴時直接說<strong>「我需要你聽我說」</strong></span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-primary">→</span>
+                                    <span>多肯定小明用行動表達愛的方式</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-secondary/10 p-5 rounded-xl text-center border border-secondary/20">
+                        <h5 class="font-bold text-secondary mb-2">✨ 建議一起做</h5>
+                        <p class="text-sm text-gray-700">找一天<strong>專門討論「時間分配」</strong>，列出各自的期待，討論出一個雙方都能接受的方案。<br>不要在訊息中反覆提及——那只會讓問題變成情緒。</p>
+                    </div>
+                </section>
+
+                <!-- Section: Score (總結) -->
+                <section id="section-score" class="p-6 md:p-8">
+                    <h4 class="text-lg font-bold text-dark mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center text-sm">🎯</span>
+                        總結評估
+                    </h4>
+
+                    <!-- Score Display -->
+                    <div class="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 mb-6 text-center border border-primary/10">
+                        <p class="text-sm text-gray-500 mb-2">關係健康度</p>
+                        <div class="flex items-center justify-center gap-1 mb-3">
+                            <span class="text-4xl">⭐</span>
+                            <span class="text-4xl">⭐</span>
+                            <span class="text-4xl">⭐</span>
+                            <span class="text-4xl">⭐</span>
+                            <span class="text-4xl opacity-30">⭐</span>
+                        </div>
+                        <p class="text-5xl font-bold text-primary mb-2">4.0<span class="text-2xl text-gray-400">/5</span></p>
+                        <p class="text-sm text-gray-600">整體健康，有成長空間</p>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-secondary/10 p-4 rounded-xl text-center border border-secondary/20">
+                            <div class="text-2xl mb-2">💪</div>
+                            <h6 class="font-bold text-secondary text-sm">核心優勢</h6>
+                            <p class="text-xs text-gray-600 mt-1">信任基礎穩固<br>衝突修復能力強</p>
+                        </div>
+                        <div class="bg-primary/10 p-4 rounded-xl text-center border border-primary/20">
+                            <div class="text-2xl mb-2">🎯</div>
+                            <h6 class="font-bold text-primary text-sm">主要課題</h6>
+                            <p class="text-xs text-gray-600 mt-1">時間分配期待需對齊</p>
+                        </div>
+                        <div class="bg-cream p-4 rounded-xl text-center border border-dark/10">
+                            <div class="text-2xl mb-2">🌱</div>
+                            <h6 class="font-bold text-dark text-sm">成長方向</h6>
+                            <p class="text-xs text-gray-600 mt-1">理解彼此的表達方式</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-5 rounded-xl text-center">
+                        <p class="text-gray-700 leading-relaxed">
+                            這段關係的基底是<strong>健康的</strong>。<br>
+                            目前的議題不是「問題」，而是兩個人需要更理解彼此的需求和表達方式。<br>
+                            <span class="text-primary font-medium">從這份報告開始對話，你們會越來越好。</span>
+                        </p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-white p-4 border-t border-gray-200 shrink-0">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p class="text-xs text-gray-400">範例報告 • 實際內容依您的對話而定</p>
+                    <button onclick="toggleModal(false); setTimeout(() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'}), 350)" class="bg-primary hover:bg-opacity-90 text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition text-sm">
+                        這對我們有幫助，開始健檢 →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Testimonials -->
+    <section class="py-20 overflow-hidden">
+        <h2 class="text-3xl font-bold text-center mb-4 px-6">聽聽其他情侶怎麼說</h2>
+        <p class="text-gray-500 text-center mb-12 px-6">來自真實用戶的回饋</p>
+
+        <!-- Scrolling Container -->
+        <div class="relative">
+            <!-- Fade edges -->
+            <div class="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-cream to-transparent z-10 pointer-events-none"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-cream to-transparent z-10 pointer-events-none"></div>
+
+            <!-- Scrolling Track -->
+            <div class="flex gap-6 animate-scroll-left">
+                <!-- First set of cards -->
+                <div class="flex gap-6 shrink-0">
+                    <!-- Card 1: 有頭像 + Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「本來<span class="line-through text-gray-400">每週吵 2-3 次</span>，看完報告後<strong class="text-secondary">已經 1 個月沒吵過了</strong>。數據讓我們看到彼此其實都在乎，只是方式不同。」</p>
+                        <div class="flex items-center gap-3">
+                            <img src="avatar-2.jpeg" alt="情侶頭像" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20">
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">小安 & 阿凱</div>
+                                <div class="text-gray-400">交往 2 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 2: 有頭像 + Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「以前<span class="line-through text-gray-400">覺得他不在乎我</span>，報告讓我看到<strong class="text-secondary">他只是表達方式不同</strong>，這真的救了我們的週末。」</p>
+                        <div class="flex items-center gap-3">
+                            <img src="avatar-couple.jpeg" alt="情侶頭像" class="w-10 h-10 rounded-full object-cover border-2 border-secondary/20">
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">思涵 & 柏翰</div>
+                                <div class="text-gray-400">交往 4 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 3: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「以前吵架<span class="line-through text-gray-400">可以冷戰 3 天</span>，現在<strong class="text-secondary">當天就能和好</strong>。報告幫我們找到那個『卡住的點』。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-lg">👫</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">筱婷 & 育成</div>
+                                <div class="text-gray-400">交往 1.5 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 4: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「遠距離時<span class="line-through text-gray-400">常常誤會對方冷淡</span>，報告讓我們看到<strong class="text-secondary">訊息裡藏了很多愛</strong>，現在更珍惜每次對話了。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-lg">💑</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">品妤 & 子軒</div>
+                                <div class="text-gray-400">遠距 3 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 5: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「交往久了<span class="line-through text-gray-400">覺得沒話聊</span>，報告提醒我們當初怎麼對話的，<strong class="text-secondary">找回了最初的感覺</strong>。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-lg">👫</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">雅婷 & 冠宇</div>
+                                <div class="text-gray-400">交往 5 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 6: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「吵完架<span class="line-through text-gray-400">總覺得他不在乎</span>，報告讓我看到<strong class="text-secondary">他一直在道歉、在修復</strong>，只是我沒注意到。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-lg">💑</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">芷晴 & 承翰</div>
+                                <div class="text-gray-400">交往 8 個月</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Duplicate set for seamless loop -->
+                <div class="flex gap-6 shrink-0">
+                    <!-- Card 1: 有頭像 + Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「本來<span class="line-through text-gray-400">每週吵 2-3 次</span>，看完報告後<strong class="text-secondary">已經 1 個月沒吵過了</strong>。數據讓我們看到彼此其實都在乎，只是方式不同。」</p>
+                        <div class="flex items-center gap-3">
+                            <img src="avatar-2.jpeg" alt="情侶頭像" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20">
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">小安 & 阿凱</div>
+                                <div class="text-gray-400">交往 2 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 2: 有頭像 + Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「以前<span class="line-through text-gray-400">覺得他不在乎我</span>，報告讓我看到<strong class="text-secondary">他只是表達方式不同</strong>，這真的救了我們的週末。」</p>
+                        <div class="flex items-center gap-3">
+                            <img src="avatar-couple.jpeg" alt="情侶頭像" class="w-10 h-10 rounded-full object-cover border-2 border-secondary/20">
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">思涵 & 柏翰</div>
+                                <div class="text-gray-400">交往 4 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 3: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「以前吵架<span class="line-through text-gray-400">可以冷戰 3 天</span>，現在<strong class="text-secondary">當天就能和好</strong>。報告幫我們找到那個『卡住的點』。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-lg">👫</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">筱婷 & 育成</div>
+                                <div class="text-gray-400">交往 1.5 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 4: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「遠距離時<span class="line-through text-gray-400">常常誤會對方冷淡</span>，報告讓我們看到<strong class="text-secondary">訊息裡藏了很多愛</strong>，現在更珍惜每次對話了。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-lg">💑</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">品妤 & 子軒</div>
+                                <div class="text-gray-400">遠距 3 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 5: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「交往久了<span class="line-through text-gray-400">覺得沒話聊</span>，報告提醒我們當初怎麼對話的，<strong class="text-secondary">找回了最初的感覺</strong>。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-lg">👫</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">雅婷 & 冠宇</div>
+                                <div class="text-gray-400">交往 5 年</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 6: Before/After -->
+                    <div class="w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+                        <div class="text-xs text-gray-400 mb-2">Before → After</div>
+                        <p class="text-gray-700 italic mb-4">「吵完架<span class="line-through text-gray-400">總覺得他不在乎</span>，報告讓我看到<strong class="text-secondary">他一直在道歉、在修復</strong>，只是我沒注意到。」</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-lg">💑</div>
+                            <div class="text-sm">
+                                <div class="font-bold text-dark">芷晴 & 承翰</div>
+                                <div class="text-gray-400">交往 8 個月</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Privacy -->
+    <section class="bg-dark text-cream py-20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-8">你的資料怎麼被處理？</h2>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white/10 p-6 rounded-2xl">
+                    <div class="text-4xl mb-4">🔐</div>
+                    <h3 class="font-bold mb-2">加密傳輸</h3>
+                    <p class="text-cream/80 text-sm">所有資料透過 HTTPS 加密傳輸，第三方無法讀取</p>
+                </div>
+                <div class="bg-white/10 p-6 rounded-2xl">
+                    <div class="text-4xl mb-4">🗑️</div>
+                    <h3 class="font-bold mb-2">完成即刪</h3>
+                    <p class="text-cream/80 text-sm">分析完成後 10 分鐘內自動刪除原始檔案</p>
+                </div>
+                <div class="bg-white/10 p-6 rounded-2xl">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <h3 class="font-bold mb-2">全自動化</h3>
+                    <p class="text-cream/80 text-sm">整個過程無人工介入，沒有人會看到你的對話</p>
+                </div>
+            </div>
+
+            <button onclick="togglePrivacyModal(true)" class="text-primary font-medium hover:underline">
+                了解完整資料處理流程 →
+            </button>
+        </div>
+    </section>
+
+    <!-- Section 6: Is This For You? -->
+    <section class="py-16 px-6 bg-white">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold text-center mb-8">這適合你嗎？</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 適合 -->
+                <div class="bg-secondary/5 p-6 rounded-2xl border border-secondary/20">
+                    <h3 class="font-bold text-secondary mb-4 flex items-center gap-2">
+                        <span class="text-xl">✓</span> 適合你，如果...
+                    </h3>
+                    <ul class="space-y-3 text-sm text-gray-700">
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            你們有反覆出現的爭吵，卻說不清原因
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            想理解對方，但不知道怎麼開口
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            願意一起面對問題、嘗試改變
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            想要一個客觀的「第三方視角」
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 不適合 -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                    <h3 class="font-bold text-gray-500 mb-4 flex items-center gap-2">
+                        <span class="text-xl">✗</span> 可能不適合，如果...
+                    </h3>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li class="flex items-start gap-2">
+                            <span class="mt-0.5">•</span>
+                            已經決定分手，只是想找理由
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="mt-0.5">•</span>
+                            其中一方完全不願意溝通
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="mt-0.5">•</span>
+                            關係中有暴力或安全疑慮
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="mt-0.5">•</span>
+                            期待 AI 能「修好」你們的關係
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="text-center text-sm text-gray-500 mt-6">
+                報告是對話的起點，不是終點。改變需要你們一起努力。
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 7: Pricing -->
+    <section id="pricing" class="py-24 px-6 bg-white">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-4">選擇適合你們的方案</h2>
+            <p class="text-gray-600 text-center mb-2">早期支持者專屬優惠，不滿意全額退款</p>
+            <p class="text-center text-sm font-medium text-red-500 mb-4">⏰ 早鳥價格只到 2/28，之後恢復原價</p>
+            <p class="text-center text-sm text-gray-400 mb-8">💡 一次諮商約 NT$ 1,500+ ｜ 健檢報告不到一杯手搖的價格</p>
+
+            <!-- 等待名單說明 -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-xl mx-auto mb-10 flex items-center gap-3">
+                <span class="text-2xl">📋</span>
+                <div class="text-sm">
+                    <span class="font-bold text-amber-800">目前為預約階段</span>
+                    <span class="text-amber-700">・預約不會立即收費，產品上線時優先通知你</span>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                <!-- Plan 1: 單次健檢 -->
+                <div class="pricing-card flex flex-col bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 relative">
+                    <div class="bg-gray-50 p-6 text-center shrink-0">
+                        <h3 class="text-xl font-bold text-dark serif">👫 單次健檢</h3>
+                        <div class="mt-3 flex flex-col items-center">
+                            <span class="text-sm text-gray-400 line-through">NT$ 499</span>
+                            <div class="flex items-baseline mt-1">
+                                <span class="text-4xl font-bold text-dark">199</span>
+                                <span class="text-gray-500 ml-2">NT$</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">早期支持者優惠</p>
+                    </div>
+                    <div class="p-6 flex flex-col flex-1">
+                        <ul class="space-y-3 mb-6 text-gray-600 text-sm flex-1">
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                分析你們的真實對話
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                數據統計圖表
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                衝突點定位與建議
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                雙方皆可查看報告
+                            </li>
+                        </ul>
+                        <button onclick="toggleWaitingListModal(true, 'single')" class="w-full bg-gray-200 hover:bg-gray-300 text-dark font-bold py-3 rounded-xl transition mt-auto">
+                            搶先預約
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Plan 2: 健檢 + 複檢 (推薦) -->
+                <div class="pricing-card selected flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-primary relative">
+                    <!-- 最划算標籤 -->
+                    <div class="absolute -top-1 -right-1 z-10">
+                        <div class="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-2xl shadow-md">
+                            推薦 🔥
+                        </div>
+                    </div>
+                    <div class="bg-primary/10 p-6 text-center shrink-0">
+                        <h3 class="text-xl font-bold text-primary serif">👫 健檢 + 複檢</h3>
+                        <div class="mt-3 flex flex-col items-center">
+                            <span class="text-sm text-gray-400 line-through">NT$ 999</span>
+                            <div class="flex items-baseline mt-1">
+                                <span class="text-4xl font-bold text-primary">349</span>
+                                <span class="text-gray-500 ml-2">NT$</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-primary/70 mt-2">省 NT$ 650！</p>
+                    </div>
+                    <div class="p-6 flex flex-col flex-1">
+                        <ul class="space-y-3 mb-6 text-gray-600 text-sm flex-1">
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                分析你們的真實對話
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                數據統計圖表
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                衝突點定位與建議
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-secondary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                雙方皆可查看報告
+                            </li>
+                            <li class="flex items-center text-primary font-medium">
+                                <svg class="w-5 h-5 text-primary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                🔄 3個月後複檢
+                            </li>
+                            <li class="flex items-center text-primary font-medium">
+                                <svg class="w-5 h-5 text-primary mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                📊 進步追蹤比較
+                            </li>
+                        </ul>
+                        <button onclick="toggleWaitingListModal(true, 'bundle')" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition shadow-lg mt-auto">
+                            搶先預約
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-sm text-gray-500 mt-8">
+                預約後我們會寄確認信到你的信箱<br>
+                <span class="text-xs text-gray-400">產品上線後會優先通知你，届時再決定是否付款</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 8: FAQ -->
+    <section class="py-20 px-6 max-w-3xl mx-auto">
+        <h2 class="text-2xl font-bold text-center mb-12">常見問題</h2>
+        <div class="space-y-4">
+            <details class="bg-white rounded-lg p-6 shadow-sm cursor-pointer group">
+                <summary class="font-bold flex justify-between items-center list-none">
+                    我的對話會被其他人看到嗎？
+                    <span class="transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="faq-content">
+                    <div>
+                        <p class="pt-4 text-gray-600">絕對不會。所有分析皆由程式自動完成，沒有任何人工介入。分析完成後，您的原始對話紀錄會被立即且永久地刪除。</p>
+                    </div>
+                </div>
+            </details>
+            <details class="bg-white rounded-lg p-6 shadow-sm cursor-pointer group">
+                <summary class="font-bold flex justify-between items-center list-none">
+                    需要伴侶同意嗎？
+                    <span class="transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="faq-content">
+                    <div>
+                        <p class="pt-4 text-gray-600"><strong>👫 雙方健檢：</strong>是的。上傳後系統會寄送確認信給雙方，兩人都點擊同意後，分析才會開始。這也是建立互信的第一步。<br><br><strong>🪞 自我反思：</strong>不需要！自我反思是免費的問答流程，完全不需要上傳對話，也不需要對方參與。適合想先整理思緒的你。</p>
+                    </div>
+                </div>
+            </details>
+            <details class="bg-white rounded-lg p-6 shadow-sm cursor-pointer group">
+                <summary class="font-bold flex justify-between items-center list-none">
+                    如果報告不準怎麼辦？
+                    <span class="transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="faq-content">
+                    <div>
+                        <p class="pt-4 text-gray-600">AI 分析基於文字紀錄，可能無法完全捕捉語氣或面對面的互動。若您覺得報告對你們沒有幫助，請來信告知，我們將無條件退款。</p>
+                    </div>
+                </div>
+            </details>
+            <details class="bg-white rounded-lg p-6 shadow-sm cursor-pointer group">
+                <summary class="font-bold flex justify-between items-center list-none">
+                    怎麼下載 LINE / IG 對話？
+                    <span class="transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="faq-content">
+                    <div>
+                        <p class="pt-4 text-gray-600">LINE：在聊天室點選選單 → 其他設定 → 傳送聊天紀錄 → 以文字檔傳送。<br><br>Instagram：設定 → 帳號中心 → 下載你的資訊 → 選擇「訊息」並以 JSON 格式下載（約需 1-2 天）。<br><br><button onclick="toggleDownloadModal(true)" class="text-primary hover:underline mt-2">查看完整圖文教學 →</button></p>
+                    </div>
+                </div>
+            </details>
+            <details class="bg-white rounded-lg p-6 shadow-sm cursor-pointer group">
+                <summary class="font-bold flex justify-between items-center list-none">
+                    分析需要多久？報告怎麼收？
+                    <span class="transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="faq-content">
+                    <div>
+                        <p class="pt-4 text-gray-600">分析通常在 <strong>10 分鐘內</strong>完成。報告會以 Email 寄送給雙方（上傳時填寫的信箱），也可以在網站上直接查看。建議找個安靜的時間，兩個人一起閱讀。</p>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- Modal: Download Tutorial -->
+    <div id="downloadModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="toggleDownloadModal(false)"></div>
+        <div class="modal-content bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+            <div class="bg-cream p-6 flex justify-between items-center border-b border-gray-100 shrink-0">
+                <h3 class="text-xl font-bold text-dark serif">如何下載對話紀錄</h3>
+                <button onclick="toggleDownloadModal(false)" class="text-gray-400 hover:text-dark p-2 rounded-full hover:bg-black/5 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- LINE -->
+                <div class="border border-[#06C755]/20 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <svg class="w-8 h-8 text-[#06C755]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.75c0 2.8 1.5 5.25 3.9 6.8-.2.8-.7 2.3-1.3 3.5-.2.4 0 .8.5.6 2.3-1 4.5-2.5 5.3-3 .5.1 1.1.2 1.6.2 5.52 0 10-3.92 10-8.75S17.52 2 12 2z"/></svg>
+                        <h4 class="text-lg font-bold text-[#06C755]">LINE 匯出步驟</h4>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                        <li>打開與伴侶的聊天室</li>
+                        <li>點擊右上角 <span class="bg-gray-100 px-2 py-0.5 rounded">≡</span> 選單</li>
+                        <li>選擇「其他設定」→「傳送聊天紀錄」</li>
+                        <li>選擇「以文字檔傳送」</li>
+                        <li>儲存 .txt 檔案</li>
+                    </ol>
+                    <p class="text-xs text-gray-400 mt-3">* 僅需文字檔，不包含圖片影片</p>
+                </div>
+
+                <!-- Instagram -->
+                <div class="border border-[#E1306C]/20 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <svg class="w-8 h-8 text-[#E1306C]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        <h4 class="text-lg font-bold text-[#E1306C]">Instagram 匯出步驟</h4>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                        <li>打開 Instagram App → 設定</li>
+                        <li>選擇「帳號中心」→「你的資訊和權限」</li>
+                        <li>點擊「下載你的資訊」</li>
+                        <li>選擇「部分資訊」→ 只勾選「訊息」</li>
+                        <li>格式選擇 <span class="bg-gray-100 px-2 py-0.5 rounded font-mono">JSON</span></li>
+                        <li>等待 Email 通知後下載</li>
+                    </ol>
+                    <p class="text-xs text-gray-400 mt-3">* 通常需要 1-2 天處理，請耐心等待</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 border-t border-gray-100 text-center shrink-0">
+                <p class="text-sm text-gray-500">下載好後，回到這裡上傳即可開始分析 🎉</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Privacy Policy -->
+    <div id="privacyModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="togglePrivacyModal(false)"></div>
+        <div class="modal-content bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+            <div class="bg-dark p-6 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-cream serif">資料處理說明</h3>
+                <button onclick="togglePrivacyModal(false)" class="text-cream/50 hover:text-cream p-2 rounded-full hover:bg-white/10 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 text-gray-700">
+                <div>
+                    <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                        <span class="text-secondary">①</span> 資料傳輸
+                    </h4>
+                    <p class="text-sm leading-relaxed">您上傳的對話檔案會透過 HTTPS 加密傳輸至我們的伺服器。傳輸過程中，任何第三方都無法讀取內容。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                        <span class="text-secondary">②</span> AI 分析過程
+                    </h4>
+                    <p class="text-sm leading-relaxed">您的對話會被送至 OpenAI 的 API 進行分析。根據 OpenAI 的 API 使用條款，透過 API 傳送的資料<strong>不會被用於訓練他們的模型</strong>。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                        <span class="text-secondary">③</span> 資料儲存
+                    </h4>
+                    <p class="text-sm leading-relaxed">我們<strong>不會</strong>在伺服器上儲存您的原始對話內容。分析完成後，原始檔案會在 10 分鐘內自動刪除。我們只保留產出的報告（不含原文）。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                        <span class="text-secondary">④</span> 人工存取
+                    </h4>
+                    <p class="text-sm leading-relaxed">整個分析過程完全自動化，<strong>沒有任何人工介入</strong>。我們的團隊無法也不會查看您的對話內容。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                        <span class="text-secondary">⑤</span> 您的權利
+                    </h4>
+                    <p class="text-sm leading-relaxed">您可以隨時要求我們刪除您的報告資料。如有任何疑慮，歡迎來信 <span class="text-primary">privacy@talkheal.tw</span> 詢問。</p>
+                </div>
+                <div class="bg-secondary/10 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600"><strong>簡單來說：</strong>您的對話只會被 AI 讀取一次，然後立即刪除。沒有人會看到，也不會被拿去做其他用途。</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 border-t border-gray-100 text-center shrink-0">
+                <button onclick="togglePrivacyModal(false)" class="text-primary font-bold hover:underline">我了解了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Waiting List -->
+    <div id="waitingListModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="toggleWaitingListModal(false)"></div>
+        <div class="modal-content bg-white w-full max-w-md rounded-2xl shadow-2xl relative overflow-hidden">
+            <div class="bg-primary p-6 text-center">
+                <div class="text-4xl mb-2">🌱</div>
+                <h3 id="waitlistTitle" class="text-xl font-bold text-white serif">單次健檢</h3>
+                <p id="waitlistSubtitle" class="text-white/80 text-sm mt-1">NT$ 199（原價 NT$ 499）</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label for="waitlistEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                        type="email"
+                        id="waitlistEmail"
+                        placeholder="your@email.com"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+                    >
+                </div>
+                <button onclick="submitWaitingList()" class="w-full bg-dark hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg">
+                    送出預約
+                </button>
+                <div class="space-y-2 pt-2">
+                    <p class="text-sm text-gray-500 flex items-center gap-2">
+                        <span class="text-secondary">✓</span> 上線後第一時間通知你
+                    </p>
+                    <p class="text-sm text-gray-500 flex items-center gap-2">
+                        <span class="text-secondary">✓</span> 早期支持者專屬優惠價鎖定
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleWaitingListModal(false)" class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Self Reflection Sample Report -->
+    <div id="selfReflectionSampleModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="toggleSelfReflectionSampleModal(false)"></div>
+        <div class="modal-content bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="bg-secondary p-6 shrink-0">
+                <div class="flex justify-between items-start">
+                    <div class="text-white">
+                        <h3 class="text-xl font-bold serif">🪞 自我反思報告範例</h3>
+                        <p class="text-white/70 text-sm mt-1">完成 10 題問答後，你會收到這樣的報告</p>
+                    </div>
+                    <button onclick="toggleSelfReflectionSampleModal(false)" class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- 你的感受 -->
+                <div class="bg-secondary/5 p-5 rounded-xl border border-secondary/20">
+                    <h4 class="font-bold text-secondary mb-3 flex items-center gap-2">
+                        <span>💭</span> 你目前的感受
+                    </h4>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        你對這段關係感到<strong>既依賴又不安</strong>。你很在乎對方，但常常覺得自己的需求沒有被聽見。當衝突發生時，你傾向先退讓，但事後會感到委屈。
+                    </p>
+                </div>
+
+                <!-- 你的溝通模式 -->
+                <div class="bg-cream p-5 rounded-xl border border-dark/10">
+                    <h4 class="font-bold text-dark mb-3 flex items-center gap-2">
+                        <span>🔍</span> 你的溝通傾向
+                    </h4>
+                    <ul class="text-gray-700 text-sm space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            <span>你習慣用<strong>暗示</strong>而非直接表達需求，期待對方主動理解</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            <span>衝突時你會先<strong>冷處理</strong>，但心裡其實很在意</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-secondary mt-0.5">•</span>
+                            <span>你對「被重視」的需求很高，容易因小事感到受傷</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 值得肯定 -->
+                <div class="bg-secondary/10 p-5 rounded-xl border border-secondary/30">
+                    <h4 class="font-bold text-secondary mb-3 flex items-center gap-2">
+                        <span>✨</span> 值得肯定的地方
+                    </h4>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        你願意反思自己在關係中的角色，這本身就是很棒的第一步。你對這段關係有期待，也願意為它努力——這份在乎，是改變的起點。
+                    </p>
+                </div>
+
+                <!-- 給你的建議 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 class="font-bold text-dark mb-3 flex items-center gap-2">
+                        <span>💡</span> 給你的下一步建議
+                    </h4>
+                    <ul class="text-gray-700 text-sm space-y-3">
+                        <li class="flex items-start gap-2">
+                            <span class="font-bold text-secondary">1.</span>
+                            <span>試著把「你都不...」改成「我希望...」，用<strong>需求</strong>代替<strong>指責</strong></span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="font-bold text-secondary">2.</span>
+                            <span>下次想冷戰時，先告訴對方：「我需要一點時間整理情緒」</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="font-bold text-secondary">3.</span>
+                            <span>準備好的話，可以考慮邀請對方一起做<strong>雙方健檢</strong>，從數據看見彼此</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="bg-gray-50 p-4 border-t border-gray-100 shrink-0">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p class="text-xs text-gray-400">範例報告 • 實際內容依你的回答而定</p>
+                    <button onclick="toggleSelfReflectionSampleModal(false); setTimeout(() => openReflectionModal(), 350)" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition text-sm">
+                        開始我的反思 →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Self Reflection -->
+    <div id="reflectionModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" onclick="closeReflectionModal()"></div>
+        <div class="modal-content bg-white w-full max-w-2xl h-[85vh] md:h-[600px] rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+
+            <!-- Header with Progress -->
+            <div class="bg-secondary p-6 shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-white serif flex items-center gap-2">
+                        🪞 自我反思
+                    </h3>
+                    <button onclick="closeReflectionModal()" class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Progress Bar -->
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
+                        <div id="reflectionProgress" class="h-full bg-white rounded-full transition-all duration-300" style="width: 10%"></div>
+                    </div>
+                    <span id="reflectionProgressText" class="text-white/80 text-sm font-medium">1/10</span>
+                </div>
+            </div>
+
+            <!-- Question Area -->
+            <div id="reflectionQuestionArea" class="flex-1 overflow-y-auto p-6 md:p-8">
+                <!-- Questions will be rendered here by JavaScript -->
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div id="reflectionNav" class="bg-gray-50 p-4 border-t border-gray-100 flex justify-between items-center shrink-0">
+                <button id="reflectionPrevBtn" onclick="prevQuestion()" class="px-6 py-2.5 rounded-full text-gray-500 hover:text-dark hover:bg-gray-200 transition font-medium disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                    ← 上一題
+                </button>
+                <button id="reflectionNextBtn" onclick="nextQuestion()" class="px-6 py-2.5 rounded-full bg-secondary hover:bg-secondary/90 text-white transition font-medium shadow-md">
+                    下一題 →
+                </button>
+            </div>
+
+            <!-- Report Area (hidden initially) -->
+            <div id="reflectionReportArea" class="hidden flex-1 overflow-y-auto">
+                <!-- Report will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-secondary/20 py-20 text-center px-6">
+        <h2 class="text-3xl md:text-4xl serif font-bold text-dark mb-4">關係值得被好好理解</h2>
+        <p class="text-gray-600 mb-8">從一個簡單的問題開始，找到對話的起點</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onclick="openReflectionModal()" class="bg-white hover:bg-gray-50 text-dark text-lg px-8 py-4 rounded-full shadow-lg transition transform hover:-translate-y-1 border-2 border-dark/10 font-medium">
+                🪞 免費自我反思
+            </button>
+            <button onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})" class="bg-primary hover:bg-opacity-90 text-white text-lg px-8 py-4 rounded-full shadow-xl transition transform hover:-translate-y-1">
+                👫 雙方健檢
+            </button>
+        </div>
+        <!-- Dev Test -->
+        <div class="mt-12 pt-8 border-t border-dark/10">
+            <a href="conversation_search.html"
+               class="inline-flex items-center gap-2 bg-dark/10 hover:bg-dark/20 text-dark text-sm px-5 py-2.5 rounded-full transition font-medium">
+                🔍 對話搜尋（測試）
+            </a>
+        </div>
+
+        <div class="mt-16 text-sm text-gray-500">
+            &copy; 2025 聊癒 TalkHeal. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        // =============================================
+        // Self Reflection Questions & State
+        // =============================================
+        const reflectionQuestions = [
+            {
+                id: 1,
+                question: "用一句話形容你們現在的關係狀態？",
+                placeholder: "例如：有點卡住、想改善但不知道怎麼開口...",
+                type: "text"
+            },
+            {
+                id: 2,
+                question: "最近一次讓你不舒服的互動是什麼時候？關於什麼？",
+                placeholder: "試著回想具體的情境...",
+                type: "textarea"
+            },
+            {
+                id: 3,
+                question: "當時對方說了什麼或做了什麼？",
+                placeholder: "盡量具體描述...",
+                type: "textarea"
+            },
+            {
+                id: 4,
+                question: "你當下的感受是什麼？",
+                placeholder: "例如：委屈、生氣、難過、不被理解...",
+                type: "text"
+            },
+            {
+                id: 5,
+                question: "你有把感受說出來嗎？如果有，你怎麼說的？",
+                placeholder: "回想你當時的反應...",
+                type: "textarea"
+            },
+            {
+                id: 6,
+                question: "這種情況是第一次，還是常常發生？",
+                type: "choice",
+                choices: ["第一次", "偶爾發生", "經常發生", "幾乎每次都這樣"]
+            },
+            {
+                id: 7,
+                question: "你覺得對方知道你的感受嗎？",
+                type: "choice",
+                choices: ["完全不知道", "可能有一點感覺", "應該知道但不在乎", "知道，但我們沒談開"]
+            },
+            {
+                id: 8,
+                question: "如果可以重來，你希望那個對話怎麼發展？",
+                placeholder: "想像一個更好的結果...",
+                type: "textarea"
+            },
+            {
+                id: 9,
+                question: "你最希望這段關係改善的一件事是什麼？",
+                placeholder: "聚焦在最重要的那一件事...",
+                type: "text"
+            },
+            {
+                id: 10,
+                question: "為了這個改善，你願意做什麼？",
+                placeholder: "從你自己可以做的開始...",
+                type: "textarea"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let reflectionAnswers = {};
+
+        // Open Reflection Modal
+        function openReflectionModal() {
+            const modal = document.getElementById('reflectionModal');
+            currentQuestionIndex = 0;
+            reflectionAnswers = {};
+
+            // Reset UI
+            document.getElementById('reflectionQuestionArea').classList.remove('hidden');
+            document.getElementById('reflectionNav').classList.remove('hidden');
+            document.getElementById('reflectionReportArea').classList.add('hidden');
+
+            renderQuestion();
+            updateProgress();
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close Reflection Modal
+        function closeReflectionModal() {
+            const modal = document.getElementById('reflectionModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            document.body.style.overflow = 'auto';
+        }
+
+        // Render Current Question
+        function renderQuestion() {
+            const container = document.getElementById('reflectionQuestionArea');
+            const q = reflectionQuestions[currentQuestionIndex];
+            const savedAnswer = reflectionAnswers[q.id] || '';
+
+            let inputHTML = '';
+            if (q.type === 'text') {
+                inputHTML = `
+                    <input type="text" id="answerInput" value="${savedAnswer}"
+                           placeholder="${q.placeholder || ''}"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-secondary transition text-lg"
+                           onkeypress="if(event.key === 'Enter') nextQuestion()">
+                `;
+            } else if (q.type === 'textarea') {
+                inputHTML = `
+                    <textarea id="answerInput" rows="4"
+                              placeholder="${q.placeholder || ''}"
+                              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-secondary transition text-lg resize-none">${savedAnswer}</textarea>
+                `;
+            } else if (q.type === 'choice') {
+                inputHTML = `
+                    <div class="grid grid-cols-1 gap-3" id="choiceContainer">
+                        ${q.choices.map((choice, idx) => `
+                            <button onclick="selectChoice('${choice}')"
+                                    class="choice-btn px-4 py-3 border-2 rounded-xl text-left transition ${savedAnswer === choice ? 'border-secondary bg-secondary/10 text-secondary font-medium' : 'border-gray-200 hover:border-secondary/50'}">
+                                ${choice}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <span class="inline-block bg-secondary/10 text-secondary text-sm font-medium px-3 py-1 rounded-full mb-4">
+                            問題 ${currentQuestionIndex + 1}
+                        </span>
+                        <h4 class="text-xl md:text-2xl font-bold text-dark leading-relaxed">
+                            ${q.question}
+                        </h4>
+                    </div>
+                    <div class="max-w-xl mx-auto">
+                        ${inputHTML}
+                    </div>
+                </div>
+            `;
+
+            // Focus input if text type
+            if (q.type === 'text' || q.type === 'textarea') {
+                setTimeout(() => {
+                    const input = document.getElementById('answerInput');
+                    if (input) input.focus();
+                }, 100);
+            }
+
+            // Update navigation buttons
+            updateNavButtons();
+        }
+
+        // Select Choice
+        function selectChoice(choice) {
+            const q = reflectionQuestions[currentQuestionIndex];
+            reflectionAnswers[q.id] = choice;
+
+            // Update UI
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                if (btn.textContent.trim() === choice) {
+                    btn.classList.add('border-secondary', 'bg-secondary/10', 'text-secondary', 'font-medium');
+                    btn.classList.remove('border-gray-200');
+                } else {
+                    btn.classList.remove('border-secondary', 'bg-secondary/10', 'text-secondary', 'font-medium');
+                    btn.classList.add('border-gray-200');
+                }
+            });
+        }
+
+        // Save Current Answer
+        function saveCurrentAnswer() {
+            const q = reflectionQuestions[currentQuestionIndex];
+            if (q.type === 'text' || q.type === 'textarea') {
+                const input = document.getElementById('answerInput');
+                if (input) {
+                    reflectionAnswers[q.id] = input.value;
+                }
+            }
+            // Choice type is saved immediately on click
+        }
+
+        // Next Question
+        function nextQuestion() {
+            saveCurrentAnswer();
+
+            if (currentQuestionIndex < reflectionQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+                updateProgress();
+            } else {
+                // Show report
+                showReflectionReport();
+            }
+        }
+
+        // Previous Question
+        function prevQuestion() {
+            saveCurrentAnswer();
+
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+                updateProgress();
+            }
+        }
+
+        // Update Progress Bar
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / reflectionQuestions.length) * 100;
+            document.getElementById('reflectionProgress').style.width = `${progress}%`;
+            document.getElementById('reflectionProgressText').textContent = `${currentQuestionIndex + 1}/${reflectionQuestions.length}`;
+        }
+
+        // Update Navigation Buttons
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('reflectionPrevBtn');
+            const nextBtn = document.getElementById('reflectionNextBtn');
+
+            prevBtn.disabled = currentQuestionIndex === 0;
+
+            if (currentQuestionIndex === reflectionQuestions.length - 1) {
+                nextBtn.textContent = '完成 ✓';
+                nextBtn.classList.add('bg-primary');
+                nextBtn.classList.remove('bg-secondary');
+            } else {
+                nextBtn.textContent = '下一題 →';
+                nextBtn.classList.remove('bg-primary');
+                nextBtn.classList.add('bg-secondary');
+            }
+        }
+
+        // Show Reflection Report
+        function showReflectionReport() {
+            saveCurrentAnswer();
+
+            // Hide question area, show report
+            document.getElementById('reflectionQuestionArea').classList.add('hidden');
+            document.getElementById('reflectionNav').classList.add('hidden');
+            document.getElementById('reflectionReportArea').classList.remove('hidden');
+
+            // Generate report content
+            const reportArea = document.getElementById('reflectionReportArea');
+
+            // Analyze answers for insights
+            const statusAnswer = reflectionAnswers[1] || '未填寫';
+            const frequencyAnswer = reflectionAnswers[6] || '';
+            const awarenessAnswer = reflectionAnswers[7] || '';
+            const wishAnswer = reflectionAnswers[9] || '未填寫';
+            const commitAnswer = reflectionAnswers[10] || '未填寫';
+
+            // Determine pattern hints
+            let patternHint = '';
+            if (frequencyAnswer.includes('經常') || frequencyAnswer.includes('每次')) {
+                patternHint = '這似乎是一個<strong>反覆出現的模式</strong>，值得認真面對。';
+            } else if (frequencyAnswer.includes('偶爾')) {
+                patternHint = '這個情況偶爾發生，可能是特定情境下的觸發點。';
+            } else {
+                patternHint = '這可能是單一事件，但仍然值得理解背後的感受。';
+            }
+
+            let communicationHint = '';
+            if (awarenessAnswer.includes('不知道')) {
+                communicationHint = '對方可能不知道你的感受——<strong>表達出來</strong>是改變的第一步。';
+            } else if (awarenessAnswer.includes('不在乎')) {
+                communicationHint = '你感覺對方知道但不在乎——這需要更深入的對話來確認。';
+            } else if (awarenessAnswer.includes('沒談開')) {
+                communicationHint = '你們都知道問題在，只是還沒找到好的方式談開。';
+            }
+
+            reportArea.innerHTML = `
+                <div class="p-6 md:p-8 space-y-6">
+                    <!-- Report Header -->
+                    <div class="text-center pb-6 border-b border-gray-100">
+                        <div class="text-4xl mb-3">🪞</div>
+                        <h3 class="text-2xl font-bold text-dark serif">你的自我反思報告</h3>
+                        <p class="text-gray-500 text-sm mt-2">${new Date().toLocaleDateString('zh-TW')}</p>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="bg-cream p-5 rounded-xl">
+                        <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                            <span class="text-secondary">📍</span> 你描述的關係狀態
+                        </h4>
+                        <p class="text-gray-700 italic">「${statusAnswer}」</p>
+                    </div>
+
+                    <!-- Core Issue -->
+                    <div class="bg-primary/5 p-5 rounded-xl border border-primary/10">
+                        <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                            <span class="text-primary">💭</span> 你在意的核心議題
+                        </h4>
+                        <p class="text-gray-700 mb-3">${wishAnswer}</p>
+                        <p class="text-sm text-gray-500">${patternHint}</p>
+                    </div>
+
+                    <!-- Communication Pattern -->
+                    <div class="bg-secondary/5 p-5 rounded-xl border border-secondary/10">
+                        <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                            <span class="text-secondary">🔄</span> 溝通觀察
+                        </h4>
+                        <p class="text-gray-700">${communicationHint}</p>
+                    </div>
+
+                    <!-- Your Commitment -->
+                    <div class="bg-cream p-5 rounded-xl">
+                        <h4 class="font-bold text-dark mb-2 flex items-center gap-2">
+                            <span class="text-secondary">✨</span> 你願意做的改變
+                        </h4>
+                        <p class="text-gray-700 italic">「${commitAnswer}」</p>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div class="bg-gray-50 p-4 rounded-xl text-center">
+                        <p class="text-sm text-gray-500">
+                            ⚠️ 這份報告是基於<strong>你的描述</strong>產生的初步覺察<br>
+                            真實情況可能不同，對方也有對方的視角
+                        </p>
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="bg-primary/10 p-6 rounded-xl text-center border-2 border-primary/20">
+                        <h4 class="font-bold text-primary mb-3">想要更客觀地了解你們的互動模式？</h4>
+                        <p class="text-sm text-gray-600 mb-4">
+                            「雙方健檢」會分析你們的<strong>真實對話</strong>，<br>
+                            用數據告訴你們溝通的優勢和需要關注的地方。
+                        </p>
+                        <button onclick="closeReflectionModal(); setTimeout(() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'}), 350)"
+                                class="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-3 rounded-full shadow-lg transition">
+                            了解雙方健檢 →
+                        </button>
+                    </div>
+
+                    <!-- Close Button -->
+                    <div class="text-center pt-4">
+                        <button onclick="closeReflectionModal()" class="text-gray-500 hover:text-dark transition">
+                            關閉報告
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // =============================================
+        // Existing Modal Functions
+        // =============================================
+
+        function toggleModal(show) {
+            const modal = document.getElementById('reportModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function toggleDownloadModal(show) {
+            const modal = document.getElementById('downloadModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function toggleSelfReflectionSampleModal(show) {
+            const modal = document.getElementById('selfReflectionSampleModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function togglePrivacyModal(show) {
+            const modal = document.getElementById('privacyModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        let selectedPlan = 'single';
+
+        function toggleWaitingListModal(show, plan = 'single') {
+            const modal = document.getElementById('waitingListModal');
+            if (show) {
+                selectedPlan = plan;
+                updateWaitingListModalContent(plan);
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function updateWaitingListModalContent(plan) {
+            const titleEl = document.getElementById('waitlistTitle');
+            const subtitleEl = document.getElementById('waitlistSubtitle');
+
+            if (plan === 'bundle') {
+                titleEl.textContent = '健檢 + 3個月複檢';
+                subtitleEl.textContent = 'NT$ 349（原價 NT$ 999）';
+            } else {
+                titleEl.textContent = '單次健檢';
+                subtitleEl.textContent = 'NT$ 199（原價 NT$ 499）';
+            }
+        }
+
+        function submitWaitingList() {
+            const email = document.getElementById('waitlistEmail').value;
+            if (!email || !email.includes('@')) {
+                alert('請輸入有效的 Email');
+                return;
+            }
+            // TODO: 串接後端 API 儲存 email 和選擇的方案
+            console.log('Waiting list:', { email, plan: selectedPlan });
+
+            // 顯示成功訊息
+            const modal = document.getElementById('waitingListModal');
+            const content = modal.querySelector('.modal-content');
+            content.innerHTML = `
+                <div class="p-8 text-center space-y-4">
+                    <div class="text-5xl">🎉</div>
+                    <h3 class="text-xl font-bold text-dark">預約成功！</h3>
+                    <p class="text-gray-600">我們會在上線時第一時間通知你</p>
+                    <button onclick="toggleWaitingListModal(false); location.reload();" class="mt-4 bg-primary hover:bg-opacity-90 text-white px-6 py-3 rounded-full font-bold transition">
+                        好的
+                    </button>
+                </div>
+            `;
+        }
+
+        // Report Navigation
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const scrollArea = document.getElementById('reportScrollArea');
+            if (section && scrollArea) {
+                scrollArea.scrollTo({
+                    top: section.offsetTop - scrollArea.offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+            // Update active state
+            updateActiveNav(sectionId);
+        }
+
+        function updateActiveNav(activeSectionId) {
+            document.querySelectorAll('.report-nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-white', 'text-primary');
+                btn.classList.add('bg-white/20', 'text-white');
+            });
+            const activeBtn = document.querySelector(`[data-section="${activeSectionId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-white', 'text-primary');
+                activeBtn.classList.remove('bg-white/20', 'text-white');
+            }
+        }
+
+        // FAQ 平滑阻尼動畫
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.space-y-4 > details').forEach(details => {
+                const content = details.querySelector('.faq-content');
+                if (!content) return;
+
+                const summary = details.querySelector('summary');
+                let isAnimating = false;
+
+                summary.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (isAnimating) return;
+                    isAnimating = true;
+
+                    if (details.open) {
+                        // 關閉動畫
+                        const startHeight = content.offsetHeight;
+                        content.style.height = startHeight + 'px';
+                        content.offsetHeight; // 強制 reflow
+                        content.style.height = '0px';
+
+                        content.addEventListener('transitionend', function handler() {
+                            details.open = false;
+                            content.style.height = '';
+                            isAnimating = false;
+                            content.removeEventListener('transitionend', handler);
+                        });
+                    } else {
+                        // 開啟動畫
+                        details.open = true;
+                        const endHeight = content.scrollHeight;
+                        content.style.height = '0px';
+                        content.offsetHeight; // 強制 reflow
+                        content.style.height = endHeight + 'px';
+
+                        content.addEventListener('transitionend', function handler() {
+                            content.style.height = '';
+                            isAnimating = false;
+                            content.removeEventListener('transitionend', handler);
+                        });
+                    }
+                });
+            });
+        });
+
+        // Scroll Spy - 監聽滾動自動更新導航
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollArea = document.getElementById('reportScrollArea');
+            const sections = ['section-overview', 'section-strength', 'section-pattern', 'section-issue', 'section-advice', 'section-score'];
+
+            if (scrollArea) {
+                scrollArea.addEventListener('scroll', function() {
+                    let currentSection = sections[0];
+                    const scrollTop = scrollArea.scrollTop;
+
+                    sections.forEach(sectionId => {
+                        const section = document.getElementById(sectionId);
+                        if (section) {
+                            const sectionTop = section.offsetTop - scrollArea.offsetTop - 100;
+                            if (scrollTop >= sectionTop) {
+                                currentSection = sectionId;
+                            }
+                        }
+                    });
+
+                    updateActiveNav(currentSection);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
